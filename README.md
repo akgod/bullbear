@@ -5,5 +5,5 @@
 
 
 运行方法：
-进入文件夹后
+解压文件bullbear.zip，后进入文件夹，输入命令：
 node start.js
