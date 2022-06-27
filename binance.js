@@ -27,11 +27,46 @@ class binance {
    let maxBullPriceChangePercent = 0.0;
    let maxBear = "BTCUSDT";
    let maxBearPriceChangePercent = 0.0;
+   let oneMBull=["BTCUSDT",0,0];  //symbol,成交额度，涨跌幅
+   let oneMBear=["BTCUSDT",0,0];
+  //  let startTime = new Date().getTime();
+  //  console.log(startTime);
+
    for(let i=0;i<rpbody.length;i++){     
       if(rpbody[i].symbol.indexOf("USDT") != -1 && rpbody[i].symbol.indexOf("_") == -1){
-          //console.log("**********************************************");
-          //console.log('"'+rpbody[i].symbol+'"'+',',rpbody[i].priceChangePercent); //,rpbody[i].priceChangePercent 
-          //console.log(maxBull,maxBullPriceChangePercent,maxBear,maxBearPriceChangePercent);
+ //////////////////////////////////////////5m行情异动############################
+           let symbol = rpbody[i].symbol;
+           let interval = "5m";
+           let limit = 1;
+           let klineurl = ufuturehostname + "/fapi/v1/klines?symbol=" + symbol + "&interval=" + interval+ "&limit="+limit;  //返回U本位合约24h价格变动情况
+           let klineoptions = {
+             url: klineurl,
+             method: "get",
+             json: true,
+             headers: { "Accept": "application/json"},
+           };
+           let klinebody = await rp(klineoptions);
+           //console.log(klinebody);
+
+           let openPrice = klinebody[0][1];
+           let nowPrice = klinebody[0][4];
+           let volume = klinebody[0][7];
+           let oneMPriceChangePercent = 100*(nowPrice  - openPrice)/openPrice;
+           if(nowPrice > openPrice && oneMPriceChangePercent > oneMBull[2]){
+             oneMBull[0]= rpbody[i].symbol;
+             oneMBull[1]= volume;
+             oneMBull[2]=  oneMPriceChangePercent     
+           }
+           if(nowPrice < openPrice && oneMPriceChangePercent < oneMBear[2]){
+            oneMBear[0]= rpbody[i].symbol;
+            oneMBear[1]= volume;
+            oneMBear[2]=  oneMPriceChangePercent     
+          }
+
+
+        
+
+ ////////////////////////////////////////////////////////////////////////////////
           usdtpairNum++;
           if(parseFloat(rpbody[i].priceChangePercent) > maxBullPriceChangePercent){
             maxBull = rpbody[i].symbol;
@@ -61,7 +96,7 @@ class binance {
    let down5Percend = (down5PercendNum / bearNum).toFixed(2);
 
    console.log(`\n\n`);
-   console.log("**********************************************");
+   console.log("******************多空情绪**********************");
    console.log(`[${moment().format("YYYY-MM-DD HH:mm:ss")}]`);
    console.log("U本位合约数量=",usdtpairNum);
    console.log("上涨数量=",bullNum,"上涨比例=",bullPercent);
@@ -70,8 +105,12 @@ class binance {
    console.log("跌幅5%以上数量=",down5PercendNum,"比例=",down5Percend);
    console.log("当前涨幅最大：",maxBull,"上涨幅度=",maxBullPriceChangePercent);
    console.log("当前跌幅最大",maxBear,"下跌幅度=",maxBearPriceChangePercent);
-   console.log("**********************************************");
-
+   console.log("*****************1分钟异动***********************");
+   console.log(oneMBull[0]+ "快速拉升"+ oneMBull[2].toFixed(2)+ "%","成交额:",oneMBull[1]);
+   console.log(oneMBear[0]+ "快速下跌"+ oneMBear[2].toFixed(2)+ "%","成交额:",oneMBear[1]);
+  //  let endTime = new Date().getTime();
+  //  console.log(endTime);
+  //  console.log(endTime - startTime);
   }  
 
   async spot(){
@@ -131,6 +170,6 @@ class binance {
 let ba = new binance();
 module.exports = ba;
 
-//ba.uFuture().then(console.log)
+ba.uFuture().then(console.log)
 //ba.spot();
 
